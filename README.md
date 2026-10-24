@@ -14,7 +14,7 @@ OneNote does a lot more than I need. I wanted something that does three things: 
 - Insert PDFs (each page becomes a page you can write on), images, or paste from the clipboard
 - Move and resize inserted images
 - Paper: white, black, or yellow, with blank, grid, ruled lines, or dots
-- Saves into a folder (your Obsidian vault) and autosaves as you work
+- Saves and opens editable `.ink.json` notebook files
 - Hold a key to switch tools temporarily (works with pen buttons mapped to keys)
 - Fixed pen thickness steps from 10% to 100%
 - Undo and redo
@@ -33,24 +33,11 @@ OneNote does a lot more than I need. I wanted something that does three things: 
 
 You can also just open `NolePad.html` in Edge or Chrome.
 
-## Saving and Obsidian
+## Saving
 
-1. Open **Notebook ▾**, then click **Choose vault folder** and pick your Obsidian vault (or any folder inside it).
-2. Click **New notebook** and name it.
-3. NolePad autosaves. For a notebook called `Physics` it writes:
-
-```
-YourVault/
-├── Physics.md              <- embeds every page as an image
-└── _ink/
-    ├── Physics.ink.json    <- editable data (NolePad opens this)
-    ├── Physics-p1.png      <- page images
-    └── Physics-p2.png
-```
-
-Edit in NolePad, read and link in Obsidian. To edit a notebook again, choose it from the notebook list in NolePad. Page images are saved at 2x resolution so they stay sharp in Obsidian.
-
-On the next launch NolePad remembers your folder. Edge sometimes asks you to click **Reconnect** first.
+Click **Save** to download an editable `.ink.json` notebook, then use **Open** to restore it. The
+JSON keeps the pages, strokes, paper settings, and inserted images together, so it can also be
+backed up or stored in an Obsidian vault.
 
 ## Pen tablet (VEIKK and others)
 
@@ -82,7 +69,7 @@ On the next launch NolePad remembers your folder. Edge sometimes asks you to cli
 
 ## Toolbar
 
-- **Notebook ▾**: vault folder, reconnect, notebook list, new notebook
+- **Save / Open**: download or restore an editable notebook file
 - **Pen, Highlight, Eraser, Move, Pan**: tools
 - Color swatches and the size slider
 - **Undo, Redo**
