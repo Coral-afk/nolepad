@@ -4,17 +4,24 @@ A tiny handwriting notebook for Windows. Draw with a pen tablet, insert PDFs and
 
 It is one HTML file (about 22 KB). There is nothing to install and no account to make.
 
+## Screenshots
+
+| White, ruled lines | Black, grid | Yellow, dots |
+| --- | --- | --- |
+| <img src="screenshots/white-ruled.jpg" alt="NolePad with white ruled paper" width="260"> | <img src="screenshots/black-grid.jpg" alt="NolePad with black grid paper" width="260"> | <img src="screenshots/yellow-dots.jpg" alt="NolePad with yellow dotted paper" width="260"> |
+
 ## Why
 
 OneNote does a lot more than I need. I wanted something that does three things: draw, insert PDF, insert image. And I wanted my notes in plain files that Obsidian can read.
 
 ## Features
 
+- Infinite canvas: pan and zoom out as far as you like, and write anywhere
 - Pressure-sensitive pen, highlighter, and stroke eraser
 - Insert PDFs (each page becomes a page you can write on), images, or paste from the clipboard
 - Move and resize inserted images
 - Paper: white, black, or yellow, with blank, grid, ruled lines, or dots
-- Saves and opens editable `.ink.json` notebook files
+- Saves into a folder (your Obsidian vault) and autosaves as you work
 - Hold a key to switch tools temporarily (works with pen buttons mapped to keys)
 - Fixed pen thickness steps from 10% to 100%
 - Undo and redo
@@ -33,11 +40,24 @@ OneNote does a lot more than I need. I wanted something that does three things: 
 
 You can also just open `NolePad.html` in Edge or Chrome.
 
-## Saving
+## Saving and Obsidian
 
-Click **Save** to download an editable `.ink.json` notebook, then use **Open** to restore it. The
-JSON keeps the pages, strokes, paper settings, and inserted images together, so it can also be
-backed up or stored in an Obsidian vault.
+1. Open **Notebook ▾**, then click **Choose vault folder** and pick your Obsidian vault (or any folder inside it).
+2. Click **New notebook** and name it.
+3. NolePad autosaves. For a notebook called `Physics` it writes:
+
+```
+YourVault/
+├── Physics.md              <- embeds every page as an image
+└── _ink/
+    ├── Physics.ink.json    <- editable data (NolePad opens this)
+    ├── Physics-p1.png      <- page images
+    └── Physics-p2.png
+```
+
+Edit in NolePad, read and link in Obsidian. To edit a notebook again, choose it from the notebook list in NolePad. Page images are saved at 2x resolution so they stay sharp in Obsidian.
+
+On the next launch NolePad remembers your folder. Edge sometimes asks you to click **Reconnect** first.
 
 ## Pen tablet (VEIKK and others)
 
@@ -62,6 +82,7 @@ backed up or stored in an Obsidian vault.
 | `Ctrl+S` | Save now |
 | `Ctrl+V` | Paste an image |
 | `Ctrl` + wheel | Zoom |
+| `Home` or `0` | Fit the view to your content |
 | `Delete` | Delete the selected image |
 | `Esc` | Close a menu |
 
@@ -69,12 +90,12 @@ backed up or stored in an Obsidian vault.
 
 ## Toolbar
 
-- **Save / Open**: download or restore an editable notebook file
+- **Notebook ▾**: vault folder, reconnect, notebook list, new notebook
 - **Pen, Highlight, Eraser, Move, Pan**: tools
 - Color swatches and the size slider
 - **Undo, Redo**
 - **Paper ▾**: paper color and pattern (applies to the whole notebook)
-- **Page ▾**: add page, delete page, insert PDF, insert image
+- **Page ▾**: add page, delete page, fit to content, insert PDF, insert image
 
 On black paper, black ink is shown as white automatically, so you do not end up with invisible ink.
 
@@ -83,7 +104,8 @@ On black paper, black ink is shown as white automatically, so you do not end up 
 - Needs Edge or Chrome, because it uses the browser's folder access feature.
 - The first PDF import loads the PDF reader (pdf.js) from the internet. Everything else works offline.
 - The eraser removes whole strokes, not parts of a stroke.
-- Pages have a fixed width of 1200 px. There is no infinite canvas.
+- Normal pages are infinite. Pages imported from a PDF keep the size of the PDF page.
+- The saved page image for an infinite page is cropped to what you wrote or inserted.
 - Imported PDF pages keep their own white page, and no paper pattern is drawn on them.
 - Notebooks store images inside the `.ink.json` file, so image-heavy notebooks get large.
 
