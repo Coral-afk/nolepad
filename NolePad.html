@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NolePad</title>
+<style>
+:root{--bg:#1e2024;--bar:#2a2d33;--line:#3a3e46;--fg:#e8e9ec;--mut:#9aa0aa;--acc:#6ab0ff}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font:13px "Segoe UI",system-ui,sans-serif}
+body{display:flex;flex-direction:column}header{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:var(--bar);border-bottom:1px solid var(--line)}
+.group{display:flex;gap:4px;align-items:center;padding-right:8px;border-right:1px solid var(--line)}button,select{font:inherit;color:var(--fg);background:#343840;border:1px solid var(--line);border-radius:5px;padding:5px 9px;cursor:pointer}
+button:hover,select:hover{background:#3d424b}button.on{background:var(--acc);border-color:var(--acc);color:#0c1620}button:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+input[type=range]{width:90px;accent-color:var(--acc)}#status{margin-left:auto;color:var(--mut)}main{display:flex;flex:1;min-height:0}
+aside{width:112px;overflow:auto;padding:8px;background:#25282d;border-right:1px solid var(--line)}aside button{display:block;width:94px;margin-bottom:8px;padding:3px;background:none;color:var(--mut)}
+aside button.on{border:2px solid var(--acc);padding:1px}aside canvas{display:block;width:84px;background:#fff;margin:auto auto 2px}
+#work{position:relative;flex:1;min-width:0}#canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+input[type=file]{display:none}.sw{width:22px;height:22px;padding:0;border-radius:50%;border:2px solid var(--bar)}.sw.on{outline:2px solid #fff;outline-offset:-3px}
+</style>
+</head>
+<body>
+<header>
+<div class="group" id="tools">
+<button data-tool="pen" class="on">Pen</button><button data-tool="highlighter">Highlight</button>
+<button data-tool="eraser">Eraser</button><button data-tool="pan">Pan</button>
+</div>
+<div class="group" id="colors"></div>
+<div class="group"><input id="size" type="range" min="10" max="100" step="10" value="20"><span id="sizeLabel">20%</span></div>
+<div class="group"><button id="undo">Undo</button><button id="redo">Redo</button></div>
+<div class="group"><select id="paper"><option value="white">White paper</option><option value="black">Black paper</option><option value="yellow">Yellow paper</option></select><select id="pattern"><option value="blank">Blank</option><option value="grid">Grid</option><option value="lines">Ruled lines</option><option value="dots">Dots</option></select></div>
+<div class="group"><button id="addPage">Add page</button><button id="deletePage">Delete page</button><button id="imageButton">Insert image</button><button id="save">Save</button><button id="open">Open</button></div>
+<input id="imageFile" type="file" accept="image/*"><input id="notebookFile" type="file" accept=".json,.ink.json">
+<span id="status">Ready</span>
+</header>
+<main><aside id="pages"></aside><div id="work"><canvas id="canvas"></canvas></div></main>
+<script>
+const $=s=>document.querySelector(s),canvas=$("#canvas"),ctx=canvas.getContext("2d");
+const colors=["#1b1b1f","#fff","#1f5fd1","#d6342c","#1f8a4c","#ffd400","#8e44ad"];
+const paper={white:{bg:"#fff",line:"rgba(70,100,170,.28)"},black:{bg:"#111214",line:"rgba(255,255,255,.14)"},yellow:{bg:"#fff4a8",line:"rgba(70,100,170,.35)"}};
+const page=()=>({w:1200,h:1600,strokes:[],images:[]});let book={name:"NolePad",paper:"white",pattern:"blank",pages:[page()]},current=0,tool="pen",ink=colors[0],width=3.2,history=[],future=[],action=null,view={x:0,y:0,s:1};
+function snapshot(){history.push(JSON.stringify(book));if(history.length>100)history.shift();future=[]}
+function restore(s){book=JSON.parse(s);current=Math.min(current,book.pages.length-1);renderPages();fit();draw()}
+function background(c,p){let q=paper[book.paper];c.fillStyle=q.bg;c.fillRect(0,0,p.w,p.h);if(book.pattern==="blank")return;c.strokeStyle=q.line;c.lineWidth=1;c.beginPath();if(book.pattern==="grid")for(let x=32;x<p.w;x+=32){c.moveTo(x,0);c.lineTo(x,p.h)}else if(book.pattern==="lines")for(let y=40;y<p.h;y+=40){c.moveTo(0,y);c.lineTo(p.w,y)}else for(let x=32;x<p.w;x+=32)for(let y=32;y<p.h;y+=32)c.rect(x-1,y-1,2,2);book.pattern==="dots"?c.fill():c.stroke()}
+function drawStroke(c,s){let col=s.color==="#1b1b1f"&&book.paper==="black"?"#fff":s.color;c.strokeStyle=c.fillStyle=col;c.lineCap=c.lineJoin="round";if(s.hl){c.globalAlpha=.3;c.lineWidth=s.size*5}else c.lineWidth=s.size;if(s.points.length===1){c.beginPath();c.arc(...s.points[0],s.size/2,0,Math.PI*2);c.fill()}else{c.beginPath();c.moveTo(...s.points[0]);s.points.slice(1).forEach(p=>c.lineTo(...p));c.stroke()}c.globalAlpha=1}
+function paint(c,p){background(c,p);p.images.forEach(i=>{let im=new Image;im.onload=()=>{c.drawImage(im,i.x,i.y,i.w,i.h)};im.src=i.src});p.strokes.forEach(s=>drawStroke(c,s))}
+function draw(){let d=devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;if(canvas.width!==w*d||canvas.height!==h*d){canvas.width=w*d;canvas.height=h*d}ctx.setTransform(d,0,0,d,0,0);ctx.fillStyle="#1e2024";ctx.fillRect(0,0,w,h);let p=book.pages[current];ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.s,view.s);ctx.shadowColor="rgba(0,0,0,.5)";ctx.shadowBlur=18;ctx.fillStyle=paper[book.paper].bg;ctx.fillRect(0,0,p.w,p.h);ctx.shadowBlur=0;paint(ctx,p);ctx.restore()}
+function fit(){let p=book.pages[current];view.s=Math.min((canvas.clientWidth-60)/p.w,1.5);view.x=(canvas.clientWidth-p.w*view.s)/2;view.y=24;draw()}
+function point(e){let r=canvas.getBoundingClientRect();return[(e.clientX-r.left-view.x)/view.s,(e.clientY-r.top-view.y)/view.s]}
+function renderPages(){let a=$("#pages");a.innerHTML="";book.pages.forEach((p,i)=>{let b=document.createElement("button");b.className=i===current?"on":"";let c=document.createElement("canvas");c.width=84;c.height=112;let x=c.getContext("2d");x.scale(84/p.w,84/p.w);paint(x,p);b.append(c,String(i+1));b.onclick=()=>{current=i;renderPages();fit()};a.append(b)})}
+colors.forEach((c,i)=>{let b=document.createElement("button");b.className="sw"+(!i?" on":"");b.style.background=c;b.onclick=()=>{ink=c;document.querySelectorAll(".sw").forEach(x=>x.classList.toggle("on",x===b));setTool("pen")};$("#colors").append(b)});
+function setTool(t){tool=t;document.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===t));canvas.style.cursor=t==="pan"?"grab":"crosshair"}
+document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);if(e.button===1||tool==="pan"){action={type:"pan",x:e.clientX,y:e.clientY,vx:view.x,vy:view.y};return}snapshot();let p=point(e);if(tool==="eraser"){action={type:"erase"};book.pages[current].strokes=book.pages[current].strokes.filter(s=>!s.points.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<12));draw();return}let s={color:ink,size:width,hl:tool==="highlighter",points:[p]};book.pages[current].strokes.push(s);action={type:"draw",stroke:s};draw()};
+canvas.onpointermove=e=>{if(!action)return;if(action.type==="pan"){view.x=action.vx+e.clientX-action.x;view.y=action.vy+e.clientY-action.y;draw();return}if(action.type==="draw"){action.stroke.points.push(point(e));draw()}else if(action.type==="erase"){let p=point(e);book.pages[current].strokes=book.pages[current].strokes.filter(s=>!s.points.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<12));draw()}};
+canvas.onpointerup=()=>{action=null;renderPages()};canvas.onpointercancel=()=>action=null;canvas.onwheel=e=>{e.preventDefault();if(e.ctrlKey){let k=Math.exp(-e.deltaY*.0025);view.s=Math.min(5,Math.max(.15,view.s*k))}else{view.x-=e.deltaX;view.y-=e.deltaY}draw()};
+$("#size").oninput=e=>{width=+e.target.value*.16;$("#sizeLabel").textContent=e.target.value+"%"};$("#paper").onchange=e=>{book.paper=e.target.value;draw();renderPages()};$("#pattern").onchange=e=>{book.pattern=e.target.value;draw();renderPages()};
+$("#undo").onclick=()=>{if(history.length){future.push(JSON.stringify(book));restore(history.pop())}};$("#redo").onclick=()=>{if(future.length){history.push(JSON.stringify(book));restore(future.pop())}};
+$("#addPage").onclick=()=>{snapshot();book.pages.splice(current+1,0,page());current++;renderPages();fit()};$("#deletePage").onclick=()=>{if(book.pages.length===1)return;if(confirm("Delete this page?")){snapshot();book.pages.splice(current,1);current=Math.min(current,book.pages.length-1);renderPages();fit()}};
+$("#imageButton").onclick=()=>$("#imageFile").click();$("#imageFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader;r.onload=()=>{let im=new Image;im.onload=()=>{snapshot();let p=book.pages[current],w=Math.min(600,p.w*.6),h=w*im.height/im.width;p.images.push({src:r.result,x:(p.w-w)/2,y:(p.h-h)/2,w,h});draw();renderPages()};im.src=r.result};r.readAsDataURL(f);e.target.value=""};
+$("#save").onclick=()=>{let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(book)],{type:"application/json"}));a.download=(book.name||"NolePad")+".ink.json";a.click();status("Downloaded notebook")};$("#open").onclick=()=>$("#notebookFile").click();$("#notebookFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader;r.onload=()=>{try{book=JSON.parse(r.result);current=0;renderPages();fit();status("Opened "+f.name)}catch{status("Could not open notebook")}};r.readAsText(f)};
+addEventListener("keydown",e=>{if(e.ctrlKey&&e.key.toLowerCase()==="z"){e.preventDefault();$("#undo").click()}if(e.ctrlKey&&e.key.toLowerCase()==="y"){e.preventDefault();$("#redo").click()}if(e.key==="p")setTool("pen");if(e.key==="h")setTool("highlighter");if(e.key==="e")setTool("eraser");if(e.key==="w")setTool("pan")});addEventListener("resize",fit);renderPages();fit();
+</script>
+</body>
+</html>
